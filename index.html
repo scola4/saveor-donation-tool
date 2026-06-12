@@ -25,8 +25,7 @@ html, body { font-family: var(--sans); font-size: 15px; color: var(--ink); backg
 .header { background: var(--white); border-bottom: 1px solid var(--ink-10); padding: 0 16px; display: flex; align-items: center; height: 48px; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
 .header-steps { display: flex; align-items: center; flex: 1; }
 .header-step { display: flex; align-items: center; gap: 8px; padding: 0 16px; height: 60px; position: relative; cursor: default; flex-shrink: 0; }
-.header-step::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: transparent; border-radius: 3px 3px 0 0; transition: background 0.2s; }
-.header-step.current::after { background: var(--green); }
+.header-step::after { display: none; }
 .step-node { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; border: 2px solid var(--ink-10); color: var(--ink-30); background: var(--white); flex-shrink: 0; transition: all 0.2s; }
 .header-step.done .step-node { background: var(--green); border-color: var(--green); color: white; }
 .header-step.current .step-node { border-color: var(--green); color: var(--green); }
@@ -212,6 +211,16 @@ input[type="text"]::placeholder { color: var(--ink-30); }
 .video-card-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-30); padding: 14px 18px 10px; }
 .video-embed-wrap { position: relative; width: 100%; padding-bottom: 56.25%; background: #000; }
 .video-embed-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+.video-play-btn {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 64px; height: 64px; border-radius: 50%;
+  background: var(--navy); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transition: transform 0.15s, background 0.15s;
+  pointer-events: none;
+}
+.video-embed-wrap:hover .video-play-btn { background: var(--green-dark); transform: translate(-50%,-50%) scale(1.08); }
 .video-card-cta { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--navy); gap: 12px; flex-wrap: wrap; }
 .video-card-cta-text { font-size: 13px; color: rgba(255,255,255,0.65); flex: 1; }
 .video-card-btn { display: inline-flex; align-items: center; padding: 8px 18px; background: var(--green); color: white; border-radius: var(--r); font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: background 0.15s; }
@@ -818,14 +827,17 @@ async function loadCharities() {
       </div>
       <div class="video-card">
         <div class="video-card-label">While you wait — see how SaveOr protects your donation records</div>
-        <div class="video-embed-wrap">
-          <iframe
-            src="https://www.youtube.com/embed/Zpz3t9Sy-WI?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1"
-            title="SaveOr — Home Inventory & Donation Tracking"
-            frameborder="0"
-            allow="autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen>
-          </iframe>
+        <div class="video-embed-wrap" id="videoWrap">
+          <img
+            src="https://img.youtube.com/vi/Zpz3t9Sy-WI/maxresdefault.jpg"
+            alt="SaveOr demo video"
+            style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;cursor:pointer;"
+            onerror="this.src='https://img.youtube.com/vi/Zpz3t9Sy-WI/hqdefault.jpg'"
+            onclick="loadVideo()"
+          />
+          <div class="video-play-btn" onclick="loadVideo()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </div>
         </div>
         <div class="video-card-cta">
           <span class="video-card-cta-text">SaveOr makes tax-deductible donation documentation effortless.</span>
@@ -1027,6 +1039,13 @@ async function loadValuation() {
   document.getElementById('step3Sub').textContent = '';
   document.getElementById('valuationContent').innerHTML = html;
 }
+/* ── Video loader ── */
+function loadVideo() {
+  const wrap = document.getElementById('videoWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<iframe src="https://www.youtube.com/embed/Zpz3t9Sy-WI?autoplay=1&rel=0&modestbranding=1" title="SaveOr" frameborder="0" allow="autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"></iframe>';
+}
+
 /* ── Attach all listeners here, after all functions are defined ── */
 document.getElementById('itemInput').addEventListener('input', onType);
 document.getElementById('itemInput').addEventListener('keydown', onKey);
@@ -1044,3 +1063,4 @@ document.addEventListener('click', function(e) {
 </div>
 </body>
 </html>
+
