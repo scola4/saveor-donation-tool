@@ -22,11 +22,7 @@
 html, body { font-family: var(--sans); font-size: 15px; color: var(--ink); background: var(--white); line-height: 1.55; -webkit-font-smoothing: antialiased; }
 
 /* Header */
-.header { background: var(--white); border-bottom: 1px solid var(--ink-10); padding: 0 32px; display: flex; align-items: center; gap: 32px; height: 60px; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
-.logo { display: flex; align-items: center; gap: 8px; text-decoration: none; flex-shrink: 0; }
-.logo-ring { width: 30px; height: 30px; border: 2.5px solid var(--navy); border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; }
-.logo-ring::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--green); position: absolute; }
-.logo-text { font-size: 17px; font-weight: 800; color: var(--navy); letter-spacing: -0.03em; }
+.header { background: var(--white); border-bottom: 1px solid var(--ink-10); padding: 0 16px; display: flex; align-items: center; height: 48px; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
 .header-steps { display: flex; align-items: center; flex: 1; }
 .header-step { display: flex; align-items: center; gap: 8px; padding: 0 16px; height: 60px; position: relative; cursor: default; flex-shrink: 0; }
 .header-step::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: transparent; border-radius: 3px 3px 0 0; transition: background 0.2s; }
@@ -37,10 +33,17 @@ html, body { font-family: var(--sans); font-size: 15px; color: var(--ink); backg
 .step-label { font-size: 12px; font-weight: 500; color: var(--ink-30); transition: color 0.2s; white-space: nowrap; }
 .header-step.current .step-label { color: var(--ink); font-weight: 600; }
 .header-step-div { width: 20px; height: 1px; background: var(--ink-10); flex-shrink: 0; }
-.header-fmv { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
-.header-fmv-label { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-30); }
-.header-fmv-value { font-size: 18px; font-weight: 800; color: var(--ink); letter-spacing: -0.03em; line-height: 1.1; }
-.header-fmv-value.has-value { color: var(--green-dark); }
+.step-chip-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.step-chip-row .step-badge { margin-bottom: 0; }
+.fmv-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--navy); color: white;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase; padding: 4px 12px;
+  border-radius: var(--r-pill);
+}
+.fmv-chip-label { color: rgba(255,255,255,0.55); }
+.fmv-chip span:last-child { color: #6EE7A0; }
 
 /* Page */
 .page { max-width: 660px; margin: 0 auto; padding: 44px 24px 80px; }
@@ -230,26 +233,22 @@ input[type="text"]::placeholder { color: var(--ink-30); }
 #printArea { display: none; }
 
 @media (max-width: 680px) {
-  .header { padding: 0 12px; gap: 0; height: auto; flex-wrap: wrap; padding-top: 12px; padding-bottom: 0; }
-  .logo { width: 100%; margin-bottom: 8px; }
-  .header-steps { overflow-x: auto; width: 100%; }
-  .header-step { padding: 8px 10px; }
+  .header { padding: 0 8px; gap: 4px; }
+  .header-steps { overflow-x: auto; flex: 1; }
+  .header-step { padding: 0 8px; }
   .step-label { font-size: 10px; }
-  .header-fmv { display: none; }
-  .page { padding: 24px 14px 60px; }
-  .step-title { font-size: 24px; }
+
+  .page { padding: 20px 14px 80px; }
+  .step-title { font-size: 22px; }
   .pitch-feats { grid-template-columns: 1fr; }
   .input-row { grid-template-columns: 1fr; }
+  input[type="text"] { font-size: 16px; }
 }
 </style>
 </head>
 <body>
 
 <header class="header">
-  <a href="https://www.saveor.com" class="logo" target="_blank">
-    <div class="logo-ring"></div>
-    <span class="logo-text">SaveOr</span>
-  </a>
   <nav class="header-steps" aria-label="Progress">
     <div class="header-step current" id="hs1"><div class="step-node" id="sn1">1</div><span class="step-label">Your items</span></div>
     <div class="header-step-div"></div>
@@ -257,10 +256,6 @@ input[type="text"]::placeholder { color: var(--ink-30); }
     <div class="header-step-div"></div>
     <div class="header-step" id="hs3"><div class="step-node" id="sn3">3</div><span class="step-label">Your valuation</span></div>
   </nav>
-  <div class="header-fmv">
-    <span class="header-fmv-label">Est. deduction</span>
-    <span class="header-fmv-value" id="fmvDisplay">$0</span>
-  </div>
 </header>
 
 <div id="printArea"></div>
@@ -269,7 +264,13 @@ input[type="text"]::placeholder { color: var(--ink-30); }
 
   <!-- Step 1 -->
   <div class="step active" id="step1">
-    <div class="step-badge"><span class="step-badge-dot"></span>Step 1 of 3</div>
+    <div class="step-chip-row">
+      <div class="step-badge"><span class="step-badge-dot"></span>Step 1 of 3</div>
+      <div class="fmv-chip" id="fmvChip" style="display:none">
+        <span class="fmv-chip-label">Est. deduction</span>
+        <span id="fmvDisplay">$0</span>
+      </div>
+    </div>
     <h1 class="step-title">What are you <em>donating?</em></h1>
     <p class="step-sub">Search and select multiple items at once. Up to 20 items per session.</p>
     <div id="limitBanner" style="display:none">
@@ -316,7 +317,10 @@ input[type="text"]::placeholder { color: var(--ink-30); }
 
   <!-- Step 2 -->
   <div class="step" id="step2">
-    <div class="step-badge"><span class="step-badge-dot"></span>Step 2 of 3</div>
+    <div class="step-chip-row">
+      <div class="step-badge"><span class="step-badge-dot"></span>Step 2 of 3</div>
+      <div class="fmv-chip-ref" id="fmvChipRef2" style="display:none"></div>
+    </div>
     <h1 class="step-title">Charities near you</h1>
     <p class="step-sub" id="step2Sub">Searching for local charities…</p>
     <div class="charity-toolbar" id="charityToolbar" style="display:none">
@@ -338,7 +342,10 @@ input[type="text"]::placeholder { color: var(--ink-30); }
 
   <!-- Step 3: Valuation + SaveOr pitch -->
   <div class="step" id="step3">
-    <div class="step-badge"><span class="step-badge-dot"></span>Step 3 of 3</div>
+    <div class="step-chip-row">
+      <div class="step-badge"><span class="step-badge-dot"></span>Step 3 of 3</div>
+      <div class="fmv-chip-ref" id="fmvChipRef3" style="display:none"></div>
+    </div>
     <h1 class="step-title">Your estimated <em>donation value</em></h1>
     <p class="step-sub" id="step3Sub">Generating your itemized valuation from Salvation Army guidelines…</p>
     <div id="valuationContent"></div>
@@ -757,8 +764,9 @@ function clearAll() { selectedItems=[]; renderPills(); updateFMV(); checkStep1()
 function updateFMV() {
   let t=0; selectedItems.forEach(i=>{t+=getItemFMV(i).mid;});
   const el=document.getElementById('fmvDisplay');
-  el.textContent='$'+t.toLocaleString();
-  el.className='header-fmv-value'+(t>0?' has-value':'');
+  if(el) el.textContent='$'+t.toLocaleString();
+  const chip=document.getElementById('fmvChip');
+  if(chip) chip.style.display = t>0 ? 'inline-flex' : 'none';
 }
 function checkStep1() {
   const zip=document.getElementById('zipInput').value.trim();
@@ -771,6 +779,16 @@ function goStep(n) {
   document.getElementById('step'+n).classList.add('active');
   updateProgress(n);
   window.scrollTo({top:0,behavior:'smooth'});
+  // Sync FMV chip into steps 2 & 3
+  if (n===2||n===3) {
+    let t=0; selectedItems.forEach(i=>{t+=getItemFMV(i).mid;});
+    const refId='fmvChipRef'+n;
+    const ref=document.getElementById(refId);
+    if(ref && t>0){
+      ref.innerHTML='<div class="fmv-chip" style="display:inline-flex"><span class="fmv-chip-label">Est. deduction&nbsp;</span><span style="color:#6EE7A0">$'+t.toLocaleString()+'</span></div>';
+      ref.style.display='block';
+    }
+  }
   if (n===2) loadCharities();
   if (n===3) loadValuation();
 }
@@ -802,10 +820,10 @@ async function loadCharities() {
         <div class="video-card-label">While you wait — see how SaveOr protects your donation records</div>
         <div class="video-embed-wrap">
           <iframe
-            src="https://www.youtube.com/embed/Zpz3t9Sy-WI?autoplay=1&mute=1&rel=0&modestbranding=1"
+            src="https://www.youtube.com/embed/Zpz3t9Sy-WI?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1"
             title="SaveOr — Home Inventory & Donation Tracking"
             frameborder="0"
-            allow="autoplay; encrypted-media"
+            allow="autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen>
           </iframe>
         </div>
