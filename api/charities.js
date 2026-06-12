@@ -1,37 +1,24 @@
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const API_KEY = process.env.ANTHROPIC_API_KEY;
-  if (!API_KEY) {
-    return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set." });
-  }
+  if (!API_KEY) return res.status(500).json({ error: "ANTHROPIC_API_KEY is not set." });
 
   const { zip, items, categories } = req.body || {};
-  if (!zip || !items) {
-    return res.status(400).json({ error: "Missing zip or items." });
-  }
+  if (!zip || !items) return res.status(400).json({ error: "Missing zip or items." });
 
-  const prompt = `You are a verified local charity finder. A user near zip code ${zip} wants to donate: ${items} (categories: ${categories || "general"}).
+  const prompt = `You are a local charity finder. A user near zip code ${zip} wants to donate: ${items} (categories: ${categories || "general"}).
 
-Use web search to find 5-7 real, currently operating donation centers near zip code ${zip}. Include a mix of:
-- National orgs with local branches (Goodwill, Habitat for Humanity ReStore, Salvation Army, Vietnam Veterans of America, St. Vincent de Paul)
-- Local and niche orgs (community thrift stores, women's shelters, domestic violence orgs, faith-based thrift stores, local food banks)
-- Specialty orgs when relevant (Dress for Success for clothing, Books for America for books, computer recycling nonprofits for electronics, Furniture Bank for furniture)
+Use web search to find 5-7 real, currently operating donation centers near zip code ${zip}. Include national chains (Goodwill, Habitat for Humanity ReStore, Salvation Army, Vietnam Veterans of America, St. Vincent de Paul) and local/niche orgs relevant to the items.
 
-CRITICAL: Search to verify each website URL is real and currently active. Use the national site if no local branch URL exists.
+Verify each website URL is real and active.
 
-Respond with ONLY a JSON array — no text before or after, no markdown. Start with [ and end with ]:
+Respond with ONLY a JSON array. No text before or after. Start with [ and end with ]:
 [{"name":"Full name","type":"2-4 word type","address":"Full street address","distanceMiles":1.4,"accepts":["furniture","electronics","clothing","kitchenware","books","art","sports","accessories","tools","baby","other"],"pickup":true,"hours":"Mon-Sat 9am-5pm","phone":"(555) 555-5555","website":"https://verified-url.org"}]`;
 
   try {
@@ -44,7 +31,7 @@ Respond with ONLY a JSON array — no text before or after, no markdown. Start w
         "anthropic-beta": "web-search-2025-03-05"
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-haiku-4-5-20251001",
         max_tokens: 2000,
         tools: [{ type: "web_search_20250305", name: "web_search" }],
         messages: [{ role: "user", content: prompt }]
@@ -74,7 +61,7 @@ Respond with ONLY a JSON array — no text before or after, no markdown. Start w
 
     if (!text) {
       return res.status(500).json({
-        error: "No text in Anthropic response",
+        error: "No text in response",
         stopReason: data.stop_reason,
         contentTypes: (data.content || []).map(b => b.type)
       });
@@ -100,11 +87,10 @@ Respond with ONLY a JSON array — no text before or after, no markdown. Start w
     try {
       parsed = JSON.parse(jsonStr);
     } catch (e) {
-      // Sanitize common AI response issues
       const sanitized = jsonStr
-        .replace(/,\s*([}\]])/g, "$1")       // trailing commas
-        .replace(/[\u2018\u2019]/g, "'")       // smart single quotes
-        .replace(/[\u201C\u201D]/g, '"');      // smart double quotes
+        .replace(/,\s*([}\]])/g, "$1")
+        .replace(/[\u2018\u2019]/g, "'")
+        .replace(/[\u201C\u201D]/g, '"');
       try {
         parsed = JSON.parse(sanitized);
       } catch (e2) {
