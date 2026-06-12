@@ -203,6 +203,17 @@ input[type="text"]::placeholder { color: var(--ink-30); }
 .legal-note { font-size: 11px; color: var(--ink-30); line-height: 1.6; margin-top: 14px; }
 .error-note { font-size: 13px; color: #B91C1C; padding: 12px 0; }
 
+.video-loading-wrap { margin-bottom: 24px; }
+.video-loading-header { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--ink-60); margin-bottom: 16px; font-weight: 500; }
+.video-card { background: var(--white); border: 1.5px solid var(--ink-10); border-radius: var(--r-xl); overflow: hidden; box-shadow: var(--shadow-sm); }
+.video-card-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-30); padding: 14px 18px 10px; }
+.video-embed-wrap { position: relative; width: 100%; padding-bottom: 56.25%; background: #000; }
+.video-embed-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+.video-card-cta { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--navy); gap: 12px; flex-wrap: wrap; }
+.video-card-cta-text { font-size: 13px; color: rgba(255,255,255,0.65); flex: 1; }
+.video-card-btn { display: inline-flex; align-items: center; padding: 8px 18px; background: var(--green); color: white; border-radius: var(--r); font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; transition: background 0.15s; }
+.video-card-btn:hover { background: var(--green-dark); }
+
 /* Print */
 @media print {
   .header { display: none; }
@@ -778,10 +789,32 @@ async function loadCharities() {
   const zip=document.getElementById('zipInput').value.trim();
   const cats=[...new Set(selectedItems.flatMap(i=>i.cats))];
   const itemNames=selectedItems.map(i=>i.label).join(', ');
-  document.getElementById('step2Sub').textContent='Searching near '+zip+'…';
+  document.getElementById('step2Sub').textContent='';
   document.getElementById('charityToolbar').style.display='none';
-  document.getElementById('charityList').innerHTML=`<div class="loading-row"><div class="spinner"></div>Finding local charities and verifying websites…</div>`;
   document.getElementById('step2Btn').disabled=true;
+  document.getElementById('charityList').innerHTML=`
+    <div class="video-loading-wrap">
+      <div class="video-loading-header">
+        <div class="spinner"></div>
+        <span>Finding charities near ${zip} — this takes about 15 seconds</span>
+      </div>
+      <div class="video-card">
+        <div class="video-card-label">While you wait — see how SaveOr protects your donation records</div>
+        <div class="video-embed-wrap">
+          <iframe
+            src="https://www.youtube.com/embed/Zpz3t9Sy-WI?autoplay=1&mute=1&rel=0&modestbranding=1"
+            title="SaveOr — Home Inventory & Donation Tracking"
+            frameborder="0"
+            allow="autoplay; encrypted-media"
+            allowfullscreen>
+          </iframe>
+        </div>
+        <div class="video-card-cta">
+          <span class="video-card-cta-text">SaveOr makes tax-deductible donation documentation effortless.</span>
+          <a href="https://app.saveor.com" target="_blank" class="video-card-btn">Start free trial</a>
+        </div>
+      </div>
+    </div>`;
   const cached=getCached(zip);
   if (cached) { aiCharities=cached; renderCharities(cached,zip,true); return; }
 
