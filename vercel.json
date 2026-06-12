@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/charities.js": {
+      "maxDuration": 60
+    }
+  }
+}

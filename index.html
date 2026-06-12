@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Charity Donation Finder — SaveOr</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #0D1B4B; --navy-light: #1A2E6B;
+  --green: #22C55E; --green-dark: #16A34A; --green-tint: #F0FAF5; --green-mid: #DCFCE7;
+  --ink: #111827; --ink-60: #4B5563; --ink-30: #9CA3AF; --ink-10: #E5E7EB; --ink-05: #F9FAFB;
+  --white: #ffffff; --amber-bg: #FEF3C7; --amber-fg: #92400E;
+  --sans: "Inter", -apple-system, sans-serif;
+  --r: 8px; --r-lg: 12px; --r-xl: 18px; --r-pill: 9999px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+}
+html, body { font-family: var(--sans); font-size: 15px; color: var(--ink); background: var(--white); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+
+/* Header */
+.header { background: var(--white); border-bottom: 1px solid var(--ink-10); padding: 0 32px; display: flex; align-items: center; gap: 32px; height: 60px; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
+.logo { display: flex; align-items: center; gap: 8px; text-decoration: none; flex-shrink: 0; }
+.logo-ring { width: 30px; height: 30px; border: 2.5px solid var(--navy); border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; }
+.logo-ring::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--green); position: absolute; }
+.logo-text { font-size: 17px; font-weight: 800; color: var(--navy); letter-spacing: -0.03em; }
+.header-steps { display: flex; align-items: center; flex: 1; }
+.header-step { display: flex; align-items: center; gap: 8px; padding: 0 16px; height: 60px; position: relative; cursor: default; flex-shrink: 0; }
+.header-step::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: transparent; border-radius: 3px 3px 0 0; transition: background 0.2s; }
+.header-step.current::after { background: var(--green); }
+.step-node { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; border: 2px solid var(--ink-10); color: var(--ink-30); background: var(--white); flex-shrink: 0; transition: all 0.2s; }
+.header-step.done .step-node { background: var(--green); border-color: var(--green); color: white; }
+.header-step.current .step-node { border-color: var(--green); color: var(--green); }
+.step-label { font-size: 12px; font-weight: 500; color: var(--ink-30); transition: color 0.2s; white-space: nowrap; }
+.header-step.current .step-label { color: var(--ink); font-weight: 600; }
+.header-step-div { width: 20px; height: 1px; background: var(--ink-10); flex-shrink: 0; }
+.header-fmv { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+.header-fmv-label { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-30); }
+.header-fmv-value { font-size: 18px; font-weight: 800; color: var(--ink); letter-spacing: -0.03em; line-height: 1.1; }
+.header-fmv-value.has-value { color: var(--green-dark); }
+
+/* Page */
+.page { max-width: 660px; margin: 0 auto; padding: 44px 24px 80px; }
+.step { display: none; }
+.step.active { display: block; }
+.step-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--green-tint); color: var(--green-dark); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 4px 12px; border-radius: var(--r-pill); margin-bottom: 14px; }
+.step-badge-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+.step-title { font-size: 30px; font-weight: 800; color: var(--navy); letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 10px; }
+.step-title em { font-style: normal; color: var(--green-dark); }
+.step-sub { font-size: 14px; color: var(--ink-60); margin-bottom: 28px; line-height: 1.7; max-width: 500px; }
+
+/* Limit banner */
+.limit-banner { background: var(--amber-bg); border: 1px solid #FDE68A; border-radius: var(--r-lg); padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--amber-fg); }
+.limit-bar-wrap { height: 4px; background: #FDE68A; border-radius: 2px; margin-top: 5px; overflow: hidden; }
+.limit-bar { height: 4px; background: var(--amber-fg); border-radius: 2px; transition: width 0.3s; }
+
+/* Inputs */
+input[type="text"] { width: 100%; height: 44px; padding: 0 14px; border: 1.5px solid var(--ink-10); border-radius: var(--r); font-size: 14px; font-family: var(--sans); color: var(--ink); background: var(--white); outline: none; transition: border-color 0.15s, box-shadow 0.15s; -webkit-appearance: none; }
+input[type="text"]:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(34,197,94,0.12); }
+input[type="text"]::placeholder { color: var(--ink-30); }
+.input-label { font-size: 12px; font-weight: 600; color: var(--ink-60); margin-bottom: 6px; display: block; }
+
+/* Search row */
+.search-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.search-row input { flex: 1; }
+.btn-add-sel { display: none; align-items: center; gap: 6px; padding: 0 16px; height: 44px; background: var(--navy); color: white; border: none; border-radius: var(--r); font-size: 13px; font-weight: 600; font-family: var(--sans); cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+.btn-add-sel.show { display: flex; }
+.btn-add-sel:hover { background: var(--navy-light); }
+
+/* Dropdown */
+.autocomplete-wrap { position: relative; margin-bottom: 14px; }
+.dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--white); border: 1.5px solid var(--ink-10); border-radius: var(--r-lg); z-index: 200; max-height: 280px; overflow-y: auto; box-shadow: var(--shadow-md); }
+.dd-cat { padding: 7px 14px 3px; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-30); border-top: 1px solid var(--ink-05); }
+.dd-cat:first-child { border-top: none; }
+.dd-item { padding: 9px 14px; font-size: 13px; cursor: pointer; color: var(--ink); display: flex; align-items: center; gap: 9px; transition: background 0.08s; user-select: none; }
+.dd-item:hover, .dd-item.focused { background: var(--green-tint); }
+.dd-item.checked { background: var(--green-mid); }
+.dd-cb { width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid var(--ink-10); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--white); transition: all 0.1s; }
+.dd-item.checked .dd-cb { background: var(--green); border-color: var(--green); }
+.dd-cb-check { display: none; }
+.dd-item.checked .dd-cb-check { display: block; }
+.dd-icat { margin-left: auto; font-size: 11px; color: var(--ink-30); flex-shrink: 0; }
+.dd-custom { color: var(--green-dark); font-weight: 600; }
+.dd-footer { padding: 9px 14px; border-top: 1px solid var(--ink-05); display: flex; align-items: center; justify-content: space-between; gap: 10px; position: sticky; bottom: 0; background: var(--white); }
+.dd-count { font-size: 12px; color: var(--ink-30); }
+.dd-count strong { color: var(--ink); font-weight: 600; }
+.btn-dd-commit { padding: 6px 14px; background: var(--navy); color: white; border: none; border-radius: var(--r); font-size: 12px; font-weight: 600; font-family: var(--sans); cursor: pointer; }
+.btn-dd-commit:hover { background: var(--navy-light); }
+.btn-dd-commit:disabled { background: var(--ink-10); color: var(--ink-30); cursor: not-allowed; }
+
+/* Pills */
+/* Item list table */
+.item-list-area { margin-bottom: 22px; }
+.item-list-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.item-list-lbl { font-size: 12px; font-weight: 600; color: var(--ink-30); }
+.btn-txt { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--ink-30); font-family: var(--sans); padding: 0; }
+.btn-txt:hover { color: var(--ink); text-decoration: underline; }
+.item-table-wrap { border: 1.5px solid var(--ink-10); border-radius: var(--r-lg); overflow: hidden; }
+.item-table { width: 100%; border-collapse: collapse; }
+.item-table thead th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-30); padding: 9px 14px; background: var(--ink-05); border-bottom: 1px solid var(--ink-10); text-align: left; }
+.item-table thead th:nth-child(2) { text-align: center; }
+.item-table thead th:nth-child(3) { text-align: right; }
+.item-table tbody tr { border-bottom: 1px solid var(--ink-05); transition: background 0.08s; }
+.item-table tbody tr:last-child { border-bottom: none; }
+.item-table tbody tr:hover { background: var(--ink-05); }
+.item-table td { padding: 10px 14px; font-size: 13px; vertical-align: middle; }
+.item-table td:first-child { color: var(--ink); font-weight: 500; }
+.item-table td:nth-child(2) { color: var(--ink-60); font-size: 12px; text-align: center; }
+.item-table td:nth-child(3) { text-align: right; }
+.item-table td:last-child { text-align: right; width: 36px; }
+.item-fmv { font-weight: 700; color: var(--navy); }
+.item-fmv-range { font-size: 11px; color: var(--ink-30); font-weight: 400; display: block; }
+.item-remove { width: 26px; height: 26px; border-radius: 50%; border: none; background: transparent; color: var(--ink-30); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; padding: 0; transition: all 0.1s; }
+.item-remove:hover { background: #FEE2E2; color: #B91C1C; }
+.item-table-footer { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--navy); color: white; }
+.item-table-footer-lbl { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.6); }
+.item-table-footer-total { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
+.item-empty { padding: 20px 14px; font-size: 13px; color: var(--ink-30); text-align: center; }
+.pill-hint { font-size: 13px; color: var(--ink-30); padding-top: 4px; }
+
+/* Input row */
+.input-row { display: grid; grid-template-columns: 150px 1fr; gap: 12px; margin-bottom: 28px; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 11px 22px; border-radius: var(--r); cursor: pointer; font-size: 14px; font-weight: 600; font-family: var(--sans); text-decoration: none; transition: all 0.15s; border: 1.5px solid transparent; white-space: nowrap; }
+.btn-navy { background: var(--navy); color: white; border-color: var(--navy); }
+.btn-navy:hover { background: var(--navy-light); }
+.btn-navy:disabled { background: var(--ink-10); border-color: var(--ink-10); color: var(--ink-30); cursor: not-allowed; }
+.btn-outline { background: transparent; color: var(--ink-60); border-color: var(--ink-10); }
+.btn-outline:hover { background: var(--ink-05); color: var(--ink); }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+
+/* Charity cards */
+.charity-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.charity-count-lbl { font-size: 13px; color: var(--ink-60); }
+.btn-print { display: flex; align-items: center; gap: 6px; padding: 7px 14px; background: var(--ink-05); border: 1.5px solid var(--ink-10); border-radius: var(--r); font-size: 12px; font-weight: 600; color: var(--ink-60); cursor: pointer; font-family: var(--sans); transition: all 0.15s; }
+.btn-print:hover { background: var(--ink-10); color: var(--ink); }
+.charity-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.charity-card { background: var(--white); border: 1.5px solid var(--ink-10); border-radius: var(--r-xl); padding: 18px 20px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: var(--shadow-sm); }
+.charity-card:hover { border-color: var(--green); box-shadow: 0 0 0 3px rgba(34,197,94,0.1); }
+.charity-card.selected { border-color: var(--green); background: var(--green-tint); box-shadow: 0 0 0 3px rgba(34,197,94,0.12); }
+.charity-top { display: flex; align-items: flex-start; gap: 12px; }
+.charity-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+.charity-name { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+.charity-meta { font-size: 12px; color: var(--ink-60); display: flex; flex-wrap: wrap; gap: 2px 12px; }
+.charity-website { font-size: 12px; font-weight: 600; color: var(--green-dark); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; }
+.charity-website:hover { color: var(--navy); text-decoration: underline; }
+.charity-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--ink-05); align-items: center; }
+.badge { font-size: 11px; padding: 3px 9px; border-radius: var(--r-pill); font-weight: 500; }
+.badge-cat { background: var(--ink-05); color: var(--ink-60); }
+.badge-pickup { background: var(--green-mid); color: var(--green-dark); font-weight: 600; }
+.badge-nopickup { background: var(--amber-bg); color: var(--amber-fg); }
+.badge-dist { background: var(--navy); color: white; font-weight: 600; }
+
+/* Loading */
+.loading-row { display: flex; align-items: center; gap: 12px; padding: 28px 0; color: var(--ink-60); font-size: 14px; }
+.spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--ink-10); border-top-color: var(--green); animation: spin 0.7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Valuation receipt */
+.receipt-header { margin-bottom: 20px; }
+.receipt-org { font-size: 13px; font-weight: 600; color: var(--ink-60); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.receipt-date { font-size: 12px; color: var(--ink-30); }
+.receipt-table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+.receipt-table th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-30); padding: 8px 14px; border-bottom: 2px solid var(--ink-10); text-align: left; }
+.receipt-table th:last-child { text-align: right; }
+.receipt-table td { font-size: 13px; padding: 10px 14px; border-bottom: 1px solid var(--ink-05); color: var(--ink); vertical-align: middle; }
+.receipt-table td:last-child { text-align: right; font-weight: 600; color: var(--navy); }
+.receipt-table tr:last-child td { border-bottom: none; }
+.receipt-table .item-cat { font-size: 11px; color: var(--ink-30); display: block; margin-top: 1px; }
+.receipt-table .low-high { font-size: 11px; color: var(--ink-30); display: block; }
+.receipt-total-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 14px; background: var(--navy); border-radius: 0 0 var(--r-xl) var(--r-xl); }
+.receipt-total-label { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.7); }
+.receipt-total-value { font-size: 22px; font-weight: 800; color: white; letter-spacing: -0.03em; }
+.receipt-block { background: var(--white); border: 1.5px solid var(--ink-10); border-radius: var(--r-xl); overflow: hidden; margin-bottom: 20px; box-shadow: var(--shadow-sm); }
+.receipt-block-inner { padding: 20px 14px 4px; }
+.receipt-note { font-size: 11px; color: var(--ink-30); line-height: 1.6; padding: 10px 14px; background: var(--ink-05); }
+
+/* Charity summary in step 3 */
+.charity-summary { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: var(--ink-05); border: 1.5px solid var(--ink-10); border-radius: var(--r-lg); margin-bottom: 24px; }
+.charity-summary-name { font-size: 14px; font-weight: 700; color: var(--navy); }
+.charity-summary-meta { font-size: 12px; color: var(--ink-60); margin-top: 1px; }
+.charity-summary-link { font-size: 12px; font-weight: 600; color: var(--green-dark); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; }
+.charity-summary-link:hover { text-decoration: underline; }
+
+/* SaveOr pitch */
+.pitch-block { background: var(--navy); border-radius: var(--r-xl); padding: 28px 30px; margin-bottom: 14px; }
+.pitch-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(34,197,94,0.15); color: var(--green); font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 10px; border-radius: var(--r-pill); margin-bottom: 10px; }
+.pitch-title { font-size: 22px; font-weight: 800; color: white; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 8px; }
+.pitch-sub { font-size: 13px; color: rgba(255,255,255,0.55); margin-bottom: 20px; line-height: 1.7; max-width: 440px; }
+.pitch-feats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 22px; }
+.pitch-feat { font-size: 12px; color: rgba(255,255,255,0.65); display: flex; align-items: flex-start; gap: 8px; line-height: 1.4; }
+.feat-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex-shrink: 0; margin-top: 4px; }
+.pitch-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn-green { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; background: var(--green); color: white; border: none; border-radius: var(--r); cursor: pointer; font-size: 13px; font-weight: 700; font-family: var(--sans); text-decoration: none; transition: background 0.15s; }
+.btn-green:hover { background: var(--green-dark); }
+.btn-ghost-white { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; background: transparent; color: rgba(255,255,255,0.5); border: 1.5px solid rgba(255,255,255,0.15); border-radius: var(--r); cursor: pointer; font-size: 13px; font-family: var(--sans); text-decoration: none; transition: all 0.15s; }
+.btn-ghost-white:hover { color: white; border-color: rgba(255,255,255,0.35); }
+
+.legal-note { font-size: 11px; color: var(--ink-30); line-height: 1.6; margin-top: 14px; }
+.error-note { font-size: 13px; color: #B91C1C; padding: 12px 0; }
+
+/* Print */
+@media print {
+  .header { display: none; }
+  .page { padding: 0; max-width: 100%; }
+  .step { display: none !important; }
+  #printArea { display: block !important; }
+  .print-header { margin-bottom: 20px; }
+  .print-title { font-size: 18px; font-weight: 800; color: #0D1B4B; }
+  .print-meta { font-size: 12px; color: #4B5563; margin-top: 4px; }
+  .print-card { border: 1px solid #ccc; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; break-inside: avoid; }
+  .print-name { font-size: 14px; font-weight: 700; color: #0D1B4B; }
+  .print-row { font-size: 12px; color: #444; margin-top: 4px; }
+}
+#printArea { display: none; }
+
+@media (max-width: 680px) {
+  .header { padding: 0 12px; gap: 0; height: auto; flex-wrap: wrap; padding-top: 12px; padding-bottom: 0; }
+  .logo { width: 100%; margin-bottom: 8px; }
+  .header-steps { overflow-x: auto; width: 100%; }
+  .header-step { padding: 8px 10px; }
+  .step-label { font-size: 10px; }
+  .header-fmv { display: none; }
+  .page { padding: 24px 14px 60px; }
+  .step-title { font-size: 24px; }
+  .pitch-feats { grid-template-columns: 1fr; }
+  .input-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <a href="https://www.saveor.com" class="logo" target="_blank">
+    <div class="logo-ring"></div>
+    <span class="logo-text">SaveOr</span>
+  </a>
+  <nav class="header-steps" aria-label="Progress">
+    <div class="header-step current" id="hs1"><div class="step-node" id="sn1">1</div><span class="step-label">Your items</span></div>
+    <div class="header-step-div"></div>
+    <div class="header-step" id="hs2"><div class="step-node" id="sn2">2</div><span class="step-label">Find a charity</span></div>
+    <div class="header-step-div"></div>
+    <div class="header-step" id="hs3"><div class="step-node" id="sn3">3</div><span class="step-label">Your valuation</span></div>
+  </nav>
+  <div class="header-fmv">
+    <span class="header-fmv-label">Est. deduction</span>
+    <span class="header-fmv-value" id="fmvDisplay">$0</span>
+  </div>
+</header>
+
+<div id="printArea"></div>
+
+<div class="page">
+
+  <!-- Step 1 -->
+  <div class="step active" id="step1">
+    <div class="step-badge"><span class="step-badge-dot"></span>Step 1 of 3</div>
+    <h1 class="step-title">What are you <em>donating?</em></h1>
+    <p class="step-sub">Search and select multiple items at once. Up to 20 items per session.</p>
+    <div id="limitBanner" style="display:none">
+      <div class="limit-banner">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div style="flex:1"><span id="limitText"></span><div class="limit-bar-wrap"><div class="limit-bar" id="limitBar"></div></div></div>
+      </div>
+    </div>
+    <div class="autocomplete-wrap">
+      <div class="search-row">
+        <input type="text" id="itemInput" placeholder="Search — sofa, iPhone, golf clubs, china set…" autocomplete="off" />
+        <button class="btn-add-sel" id="btnAddSel" onclick="commitChecked()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span id="btnAddSelLbl">Add items</span>
+        </button>
+      </div>
+      <div class="dropdown" id="itemDrop" style="display:none"></div>
+    </div>
+    <div class="item-list-area">
+      <div class="item-list-header">
+        <span class="item-list-lbl">Selected items</span>
+        <button class="btn-txt" id="btnClearAll" onclick="clearAll()" style="display:none">Clear all</button>
+      </div>
+      <div id="itemListWrap">
+        <div class="item-table-wrap">
+          <div class="item-empty">Items you add will appear here</div>
+        </div>
+      </div>
+    </div>
+    <div class="input-row">
+      <div>
+        <label class="input-label" for="zipInput">Zip code</label>
+        <input type="text" id="zipInput" placeholder="e.g. 20001" maxlength="5" inputmode="numeric" />
+      </div>
+      <div style="display:flex;align-items:flex-end;padding-bottom:12px;">
+        <p style="font-size:13px;color:var(--ink-30);line-height:1.6;">Used to find real local charities with verified websites.</p>
+      </div>
+    </div>
+    <button class="btn btn-navy" id="step1Btn" onclick="goStep(2)" disabled>
+      Find matching charities
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </button>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="step" id="step2">
+    <div class="step-badge"><span class="step-badge-dot"></span>Step 2 of 3</div>
+    <h1 class="step-title">Charities near you</h1>
+    <p class="step-sub" id="step2Sub">Searching for local charities…</p>
+    <div class="charity-toolbar" id="charityToolbar" style="display:none">
+      <span class="charity-count-lbl" id="charityCountLbl"></span>
+      <button class="btn-print" onclick="doPrint()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print list
+      </button>
+    </div>
+    <div id="charityList"></div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="goStep(1)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back
+      </button>
+      <button class="btn btn-navy" id="step2Btn" onclick="goStep(3)" disabled>Get my donation valuation</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Valuation + SaveOr pitch -->
+  <div class="step" id="step3">
+    <div class="step-badge"><span class="step-badge-dot"></span>Step 3 of 3</div>
+    <h1 class="step-title">Your estimated <em>donation value</em></h1>
+    <p class="step-sub" id="step3Sub">Generating your itemized valuation from Salvation Army guidelines…</p>
+    <div id="valuationContent"></div>
+  </div>
+
+</div>
+
+<script>
+const MAX_ITEMS = 20;
+const CHARITY_CACHE_KEY = 'saveor_charity_cache_v2';
+const COLORS = ['#22C55E','#0D1B4B','#D97706','#7C3AED','#16A34A','#DC2626','#0891B2'];
+// Category fallbacks (Salvation Army averages)
+const FMV_RANGES = {
+  furniture:   {low:26,  mid:85,  high:207, label:'Furniture'},
+  electronics: {low:25,  mid:88,  high:200, label:'Electronics'},
+  clothing:    {low:3,   mid:15,  high:62,  label:'Clothing'},
+  kitchenware: {low:1,   mid:12,  high:50,  label:'Kitchenware'},
+  art:         {low:5,   mid:55,  high:207, label:'Art & Decor'},
+  books:       {low:1,   mid:2,   high:5,   label:'Books & Media'},
+  sports:      {low:3,   mid:30,  high:104, label:'Sporting Goods'},
+  accessories: {low:2,   mid:20,  high:75,  label:'Accessories'},
+  tools:       {low:5,   mid:35,  high:104, label:'Tools & Home'},
+  baby:        {low:5,   mid:30,  high:80,  label:'Baby & Kids'},
+  other:       {low:2,   mid:20,  high:100, label:'Other'},
+};
+
+// Per-item values from The Salvation Army Donation Value Guide (salvationarmyusa.org)
+const FMV_ITEM = {
+  'Sofa':{low:36,high:207,mid:122},'Sectional sofa':{low:88,high:311,mid:200},
+  'Loveseat':{low:36,high:207,mid:122},'Armchair':{low:26,high:104,mid:65},
+  'Recliner':{low:30,high:150,mid:90},'Dining table':{low:156,high:934,mid:408},
+  'Dining chairs':{low:3,high:10,mid:7},'Coffee table':{low:16,high:67,mid:42},
+  'End table':{low:10,high:52,mid:31},'Console table':{low:16,high:67,mid:42},
+  'Desk':{low:26,high:145,mid:86},'Office chair':{low:26,high:104,mid:65},
+  'Bookshelf':{low:15,high:90,mid:53},'Dresser':{low:21,high:104,mid:63},
+  'Chest of drawers':{low:26,high:99,mid:63},'Wardrobe':{low:21,high:104,mid:63},
+  'Armoire':{low:21,high:104,mid:63},'Bed frame':{low:52,high:176,mid:114},
+  'Headboard':{low:15,high:70,mid:43},'Nightstand':{low:10,high:50,mid:30},
+  'Mattress':{low:13,high:78,mid:46},'Bunk bed':{low:52,high:176,mid:114},
+  'Crib':{low:26,high:104,mid:65},'Rocking chair':{low:26,high:104,mid:65},
+  'Bench':{low:16,high:67,mid:42},'Ottoman':{low:10,high:50,mid:30},
+  'Futon':{low:36,high:207,mid:122},'Folding table':{low:16,high:67,mid:42},
+  'Folding chairs':{low:3,high:10,mid:7},'Bar stools':{low:10,high:40,mid:25},
+  'TV stand':{low:20,high:100,mid:60},'Entertainment center':{low:20,high:100,mid:60},
+  'Filing cabinet':{low:16,high:52,mid:34},'Patio furniture':{low:20,high:200,mid:110},
+  'Grandfather clock':{low:52,high:145,mid:99},
+  'iPhone':{low:25,high:100,mid:63},'Android phone':{low:25,high:100,mid:63},
+  'iPad':{low:25,high:150,mid:88},'Tablet':{low:25,high:150,mid:88},
+  'Laptop':{low:25,high:200,mid:113},'Desktop computer':{low:104,high:415,mid:260},
+  'Monitor':{low:5,high:51,mid:28},'Keyboard and mouse':{low:5,high:51,mid:28},
+  'Printer':{low:5,high:155,mid:80},'TV':{low:40,high:200,mid:120},
+  'DVD player':{low:8,high:16,mid:12},'Stereo system':{low:16,high:78,mid:47},
+  'Bluetooth speaker':{low:5,high:40,mid:23},'Camera':{low:10,high:75,mid:43},
+  'Video game console':{low:25,high:150,mid:88},'Video games':{low:2,high:5,mid:4},
+  'E-reader':{low:10,high:50,mid:30},'Smart speaker':{low:10,high:40,mid:25},
+  'Alarm clock':{low:5,high:25,mid:15},'Electric fan':{low:8,high:23,mid:16},
+  'Portable radio':{low:8,high:52,mid:30},'Cables and chargers':{low:1,high:10,mid:6},
+  'Winter coats':{low:10,high:41,mid:26},'Jackets':{low:4,high:26,mid:15},
+  'Suits':{low:16,high:62,mid:39},'Blazers':{low:8,high:26,mid:17},
+  'Dress shirts':{low:3,high:12,mid:8},'T-shirts':{low:2,high:6,mid:4},
+  'Sweaters':{low:3,high:16,mid:10},'Jeans':{low:4,high:12,mid:8},
+  'Dress pants':{low:5,high:12,mid:9},'Dresses':{low:4,high:20,mid:12},
+  'Skirts':{low:3,high:8,mid:6},'Shoes':{low:4,high:26,mid:15},
+  'Boots':{low:3,high:21,mid:12},'Sneakers':{low:4,high:26,mid:15},
+  "Children's clothes":{low:2,high:12,mid:7},'Baby clothes':{low:1,high:5,mid:3},
+  'Uniforms':{low:5,high:20,mid:13},'Formal wear':{low:25,high:250,mid:138},
+  'Pajamas':{low:2,high:8,mid:5},'Hats and caps':{low:1,high:8,mid:5},
+  'Pots and pans':{low:1,high:3,mid:2},'Cast iron skillet':{low:1,high:3,mid:2},
+  'Dishes':{low:1,high:3,mid:2},'Bowls':{low:1,high:3,mid:2},
+  'Silverware set':{low:1,high:3,mid:2},'Glasses and mugs':{low:1,high:2,mid:2},
+  'Blender':{low:5,high:21,mid:13},'Coffee maker':{low:4,high:16,mid:10},
+  'Toaster':{low:4,high:16,mid:10},'Microwave':{low:10,high:50,mid:30},
+  'Stand mixer':{low:5,high:21,mid:13},'Food processor':{low:5,high:21,mid:13},
+  'Air fryer':{low:10,high:40,mid:25},'Slow cooker':{low:5,high:21,mid:13},
+  'Rice cooker':{low:5,high:21,mid:13},'Electric kettle':{low:4,high:16,mid:10},
+  'Knife set':{low:5,high:21,mid:13},'Cutting boards':{low:1,high:3,mid:2},
+  'Bakeware':{low:1,high:3,mid:2},'Storage containers':{low:1,high:3,mid:2},
+  'Novels':{low:1,high:2,mid:2},'Nonfiction books':{low:1,high:3,mid:2},
+  'Textbooks':{low:1,high:3,mid:2},"Children's books":{low:1,high:6,mid:4},
+  'Cookbooks':{low:1,high:3,mid:2},'Coffee table books':{low:1,high:3,mid:2},
+  'DVDs':{low:2,high:5,mid:4},'CDs':{low:2,high:5,mid:4},
+  'Vinyl records':{low:2,high:5,mid:4},'Board games':{low:2,high:10,mid:6},
+  'Puzzles':{low:2,high:10,mid:6},'Audiobooks on CD':{low:2,high:5,mid:4},
+  'Art prints':{low:5,high:207,mid:106},'Oil paintings':{low:5,high:207,mid:106},
+  'Watercolors':{low:5,high:207,mid:106},'Framed photos':{low:1,high:8,mid:5},
+  'Sculptures':{low:5,high:207,mid:106},'Vases':{low:1,high:6,mid:4},
+  'Mirrors':{low:3,high:15,mid:9},'Lamps':{low:5,high:78,mid:42},
+  'Rugs':{low:21,high:93,mid:57},'Curtains':{low:2,high:12,mid:7},
+  'Throw pillows':{low:2,high:8,mid:5},'Blankets and throws':{low:3,high:16,mid:10},
+  'Wall clocks':{low:5,high:52,mid:29},'China set':{low:89,high:311,mid:200},
+  'Collectibles':{low:5,high:207,mid:106},'Decorative bowls':{low:1,high:6,mid:4},
+  'Candle holders':{low:1,high:6,mid:4},'Floor lamp':{low:6,high:52,mid:29},
+  'Bicycles':{low:5,high:83,mid:44},'Golf clubs':{low:2,high:26,mid:14},
+  'Golf bag':{low:5,high:40,mid:23},'Tennis rackets':{low:2,high:5,mid:4},
+  'Yoga mat':{low:2,high:20,mid:11},'Weights and dumbbells':{low:5,high:40,mid:23},
+  'Treadmill':{low:40,high:200,mid:120},'Stationary bike':{low:40,high:200,mid:120},
+  'Camping gear':{low:15,high:100,mid:58},'Skis and snowboard':{low:15,high:100,mid:58},
+  'Fishing gear':{low:5,high:40,mid:23},'Kayak or canoe':{low:40,high:200,mid:120},
+  'Roller skates':{low:3,high:16,mid:10},'Football equipment':{low:5,high:40,mid:23},
+  'Baseball equipment':{low:5,high:40,mid:23},'Exercise equipment':{low:20,high:150,mid:85},
+  'Purses':{low:2,high:21,mid:12},'Handbags':{low:2,high:21,mid:12},
+  'Leather goods':{low:2,high:21,mid:12},'Belts':{low:1,high:8,mid:5},
+  'Scarves':{low:1,high:10,mid:6},'Jewelry':{low:3,high:75,mid:39},
+  'Costume jewelry':{low:1,high:8,mid:5},'Watches':{low:5,high:60,mid:33},
+  'Sunglasses':{low:2,high:15,mid:9},'Luggage':{low:5,high:16,mid:11},
+  'Backpacks':{low:5,high:40,mid:23},'Wallets':{low:1,high:8,mid:5},
+  'Ties and bow ties':{low:2,high:8,mid:5},'Umbrellas':{low:2,high:6,mid:4},
+  'Power tools':{low:16,high:104,mid:60},'Hand tools':{low:5,high:26,mid:16},
+  'Toolbox':{low:5,high:26,mid:16},'Ladder':{low:16,high:67,mid:42},
+  'Garden tools':{low:5,high:20,mid:13},'Lawn mower':{low:26,high:104,mid:65},
+  'Vacuum cleaner':{low:16,high:67,mid:42},'Sewing machine':{low:15,high:88,mid:52},
+  'Linens and towels':{low:1,high:8,mid:5},'Bedding':{low:3,high:25,mid:14},
+  'Cleaning supplies':{low:1,high:8,mid:5},'Storage shelving':{low:15,high:90,mid:53},
+  'Stroller':{low:15,high:80,mid:48},'Car seat':{low:10,high:40,mid:25},
+  'High chair':{low:10,high:52,mid:31},'Baby monitor':{low:5,high:25,mid:15},
+  'Baby swing':{low:5,high:31,mid:18},'Play yard':{low:4,high:31,mid:18},
+  'Toys':{low:1,high:10,mid:6},"Children's toys":{low:1,high:10,mid:6},
+  'Stuffed animals':{low:1,high:10,mid:6},'LEGO sets':{low:5,high:40,mid:23},
+};
+
+function getItemFMV(item) {
+  const exact = FMV_ITEM[item.label];
+  if (exact) return exact;
+  const cat = item.cats[0] || 'other';
+  return FMV_RANGES[cat] || FMV_RANGES.other;
+}
+
+const ITEMS_DB = [
+  {label:"Sofa",cat:"Furniture",cats:["furniture"]},{label:"Sectional sofa",cat:"Furniture",cats:["furniture"]},
+  {label:"Loveseat",cat:"Furniture",cats:["furniture"]},{label:"Armchair",cat:"Furniture",cats:["furniture"]},
+  {label:"Recliner",cat:"Furniture",cats:["furniture"]},{label:"Dining table",cat:"Furniture",cats:["furniture"]},
+  {label:"Dining chairs",cat:"Furniture",cats:["furniture"]},{label:"Coffee table",cat:"Furniture",cats:["furniture"]},
+  {label:"End table",cat:"Furniture",cats:["furniture"]},{label:"Console table",cat:"Furniture",cats:["furniture"]},
+  {label:"Desk",cat:"Furniture",cats:["furniture"]},{label:"Office chair",cat:"Furniture",cats:["furniture"]},
+  {label:"Bookshelf",cat:"Furniture",cats:["furniture","books"]},{label:"Dresser",cat:"Furniture",cats:["furniture"]},
+  {label:"Chest of drawers",cat:"Furniture",cats:["furniture"]},{label:"Wardrobe",cat:"Furniture",cats:["furniture"]},
+  {label:"Armoire",cat:"Furniture",cats:["furniture"]},{label:"Bed frame",cat:"Furniture",cats:["furniture"]},
+  {label:"Headboard",cat:"Furniture",cats:["furniture"]},{label:"Nightstand",cat:"Furniture",cats:["furniture"]},
+  {label:"Mattress",cat:"Furniture",cats:["furniture"]},{label:"Bunk bed",cat:"Furniture",cats:["furniture"]},
+  {label:"Crib",cat:"Furniture",cats:["furniture"]},{label:"Rocking chair",cat:"Furniture",cats:["furniture"]},
+  {label:"Bench",cat:"Furniture",cats:["furniture"]},{label:"Ottoman",cat:"Furniture",cats:["furniture"]},
+  {label:"Futon",cat:"Furniture",cats:["furniture"]},{label:"Folding table",cat:"Furniture",cats:["furniture"]},
+  {label:"Folding chairs",cat:"Furniture",cats:["furniture"]},{label:"Bar stools",cat:"Furniture",cats:["furniture"]},
+  {label:"TV stand",cat:"Furniture",cats:["furniture"]},{label:"Entertainment center",cat:"Furniture",cats:["furniture"]},
+  {label:"Filing cabinet",cat:"Furniture",cats:["furniture"]},{label:"Patio furniture",cat:"Furniture",cats:["furniture"]},
+  {label:"Grandfather clock",cat:"Furniture",cats:["furniture","art"]},
+  {label:"iPhone",cat:"Electronics",cats:["electronics"]},{label:"Android phone",cat:"Electronics",cats:["electronics"]},
+  {label:"iPad",cat:"Electronics",cats:["electronics"]},{label:"Tablet",cat:"Electronics",cats:["electronics"]},
+  {label:"Laptop",cat:"Electronics",cats:["electronics"]},{label:"Desktop computer",cat:"Electronics",cats:["electronics"]},
+  {label:"Monitor",cat:"Electronics",cats:["electronics"]},{label:"Keyboard and mouse",cat:"Electronics",cats:["electronics"]},
+  {label:"Printer",cat:"Electronics",cats:["electronics"]},{label:"TV",cat:"Electronics",cats:["electronics"]},
+  {label:"DVD player",cat:"Electronics",cats:["electronics"]},{label:"Stereo system",cat:"Electronics",cats:["electronics"]},
+  {label:"Bluetooth speaker",cat:"Electronics",cats:["electronics"]},{label:"Camera",cat:"Electronics",cats:["electronics"]},
+  {label:"Video game console",cat:"Electronics",cats:["electronics"]},{label:"Video games",cat:"Electronics",cats:["electronics"]},
+  {label:"E-reader",cat:"Electronics",cats:["electronics"]},{label:"Smart speaker",cat:"Electronics",cats:["electronics"]},
+  {label:"Alarm clock",cat:"Electronics",cats:["electronics"]},{label:"Electric fan",cat:"Electronics",cats:["electronics"]},
+  {label:"Portable radio",cat:"Electronics",cats:["electronics"]},{label:"Cables and chargers",cat:"Electronics",cats:["electronics"]},
+  {label:"Winter coats",cat:"Clothing",cats:["clothing"]},{label:"Jackets",cat:"Clothing",cats:["clothing"]},
+  {label:"Suits",cat:"Clothing",cats:["clothing"]},{label:"Blazers",cat:"Clothing",cats:["clothing"]},
+  {label:"Dress shirts",cat:"Clothing",cats:["clothing"]},{label:"T-shirts",cat:"Clothing",cats:["clothing"]},
+  {label:"Sweaters",cat:"Clothing",cats:["clothing"]},{label:"Jeans",cat:"Clothing",cats:["clothing"]},
+  {label:"Dress pants",cat:"Clothing",cats:["clothing"]},{label:"Dresses",cat:"Clothing",cats:["clothing"]},
+  {label:"Skirts",cat:"Clothing",cats:["clothing"]},{label:"Shoes",cat:"Clothing",cats:["clothing"]},
+  {label:"Boots",cat:"Clothing",cats:["clothing"]},{label:"Sneakers",cat:"Clothing",cats:["clothing"]},
+  {label:"Children's clothes",cat:"Clothing",cats:["clothing"]},{label:"Baby clothes",cat:"Clothing",cats:["clothing"]},
+  {label:"Uniforms",cat:"Clothing",cats:["clothing"]},{label:"Formal wear",cat:"Clothing",cats:["clothing"]},
+  {label:"Pajamas",cat:"Clothing",cats:["clothing"]},{label:"Hats and caps",cat:"Clothing",cats:["clothing"]},
+  {label:"Pots and pans",cat:"Kitchenware",cats:["kitchenware"]},{label:"Cast iron skillet",cat:"Kitchenware",cats:["kitchenware"]},
+  {label:"Dishes",cat:"Kitchenware",cats:["kitchenware"]},{label:"Bowls",cat:"Kitchenware",cats:["kitchenware"]},
+  {label:"Silverware set",cat:"Kitchenware",cats:["kitchenware"]},{label:"Glasses and mugs",cat:"Kitchenware",cats:["kitchenware"]},
+  {label:"Blender",cat:"Kitchenware",cats:["kitchenware"]},{label:"Coffee maker",cat:"Kitchenware",cats:["kitchenware"]},
+  {label:"Toaster",cat:"Kitchenware",cats:["kitchenware"]},{label:"Microwave",cat:"Kitchenware",cats:["kitchenware"]},
+  {label:"Stand mixer",cat:"Kitchenware",cats:["kitchenware"]},{label:"Food processor",cat:"Kitchenware",cats:["kitchenware"]},
+  {label:"Air fryer",cat:"Kitchenware",cats:["kitchenware"]},{label:"Slow cooker",cat:"Kitchenware",cats:["kitchenware"]},
+  {label:"Rice cooker",cat:"Kitchenware",cats:["kitchenware"]},{label:"Electric kettle",cat:"Kitchenware",cats:["kitchenware"]},
+  {label:"Knife set",cat:"Kitchenware",cats:["kitchenware"]},{label:"Cutting boards",cat:"Kitchenware",cats:["kitchenware"]},
+  {label:"Bakeware",cat:"Kitchenware",cats:["kitchenware"]},{label:"Storage containers",cat:"Kitchenware",cats:["kitchenware"]},
+  {label:"Novels",cat:"Books & Media",cats:["books"]},{label:"Nonfiction books",cat:"Books & Media",cats:["books"]},
+  {label:"Textbooks",cat:"Books & Media",cats:["books"]},{label:"Children's books",cat:"Books & Media",cats:["books"]},
+  {label:"Cookbooks",cat:"Books & Media",cats:["books"]},{label:"Coffee table books",cat:"Books & Media",cats:["books"]},
+  {label:"DVDs",cat:"Books & Media",cats:["books"]},{label:"CDs",cat:"Books & Media",cats:["books"]},
+  {label:"Vinyl records",cat:"Books & Media",cats:["books","art"]},{label:"Board games",cat:"Books & Media",cats:["books"]},
+  {label:"Puzzles",cat:"Books & Media",cats:["books"]},{label:"Audiobooks on CD",cat:"Books & Media",cats:["books"]},
+  {label:"Art prints",cat:"Art & Decor",cats:["art"]},{label:"Oil paintings",cat:"Art & Decor",cats:["art"]},
+  {label:"Watercolors",cat:"Art & Decor",cats:["art"]},{label:"Framed photos",cat:"Art & Decor",cats:["art"]},
+  {label:"Sculptures",cat:"Art & Decor",cats:["art"]},{label:"Vases",cat:"Art & Decor",cats:["art"]},
+  {label:"Mirrors",cat:"Art & Decor",cats:["art","furniture"]},{label:"Lamps",cat:"Art & Decor",cats:["art","furniture"]},
+  {label:"Rugs",cat:"Art & Decor",cats:["art","furniture"]},{label:"Curtains",cat:"Art & Decor",cats:["art"]},
+  {label:"Throw pillows",cat:"Art & Decor",cats:["art"]},{label:"Blankets and throws",cat:"Art & Decor",cats:["art"]},
+  {label:"Wall clocks",cat:"Art & Decor",cats:["art"]},{label:"China set",cat:"Art & Decor",cats:["art","kitchenware"]},
+  {label:"Collectibles",cat:"Art & Decor",cats:["art"]},{label:"Decorative bowls",cat:"Art & Decor",cats:["art"]},
+  {label:"Candle holders",cat:"Art & Decor",cats:["art"]},{label:"Floor lamp",cat:"Art & Decor",cats:["art","furniture"]},
+  {label:"Bicycles",cat:"Sporting Goods",cats:["sports"]},{label:"Golf clubs",cat:"Sporting Goods",cats:["sports"]},
+  {label:"Golf bag",cat:"Sporting Goods",cats:["sports"]},{label:"Tennis rackets",cat:"Sporting Goods",cats:["sports"]},
+  {label:"Yoga mat",cat:"Sporting Goods",cats:["sports"]},{label:"Weights and dumbbells",cat:"Sporting Goods",cats:["sports"]},
+  {label:"Treadmill",cat:"Sporting Goods",cats:["sports"]},{label:"Stationary bike",cat:"Sporting Goods",cats:["sports"]},
+  {label:"Camping gear",cat:"Sporting Goods",cats:["sports"]},{label:"Skis and snowboard",cat:"Sporting Goods",cats:["sports"]},
+  {label:"Fishing gear",cat:"Sporting Goods",cats:["sports"]},{label:"Kayak or canoe",cat:"Sporting Goods",cats:["sports"]},
+  {label:"Roller skates",cat:"Sporting Goods",cats:["sports"]},{label:"Football equipment",cat:"Sporting Goods",cats:["sports"]},
+  {label:"Baseball equipment",cat:"Sporting Goods",cats:["sports"]},{label:"Exercise equipment",cat:"Sporting Goods",cats:["sports"]},
+  {label:"Purses",cat:"Accessories",cats:["accessories"]},{label:"Handbags",cat:"Accessories",cats:["accessories"]},
+  {label:"Leather goods",cat:"Accessories",cats:["accessories"]},{label:"Belts",cat:"Accessories",cats:["accessories"]},
+  {label:"Scarves",cat:"Accessories",cats:["accessories"]},{label:"Jewelry",cat:"Accessories",cats:["accessories"]},
+  {label:"Costume jewelry",cat:"Accessories",cats:["accessories"]},{label:"Watches",cat:"Accessories",cats:["accessories"]},
+  {label:"Sunglasses",cat:"Accessories",cats:["accessories"]},{label:"Luggage",cat:"Accessories",cats:["accessories"]},
+  {label:"Backpacks",cat:"Accessories",cats:["accessories"]},{label:"Wallets",cat:"Accessories",cats:["accessories"]},
+  {label:"Ties and bow ties",cat:"Accessories",cats:["accessories"]},{label:"Umbrellas",cat:"Accessories",cats:["accessories"]},
+  {label:"Power tools",cat:"Tools & Home",cats:["tools"]},{label:"Hand tools",cat:"Tools & Home",cats:["tools"]},
+  {label:"Toolbox",cat:"Tools & Home",cats:["tools"]},{label:"Ladder",cat:"Tools & Home",cats:["tools"]},
+  {label:"Garden tools",cat:"Tools & Home",cats:["tools"]},{label:"Lawn mower",cat:"Tools & Home",cats:["tools"]},
+  {label:"Vacuum cleaner",cat:"Tools & Home",cats:["tools"]},{label:"Sewing machine",cat:"Tools & Home",cats:["tools"]},
+  {label:"Linens and towels",cat:"Tools & Home",cats:["tools"]},{label:"Bedding",cat:"Tools & Home",cats:["tools"]},
+  {label:"Cleaning supplies",cat:"Tools & Home",cats:["tools"]},{label:"Storage shelving",cat:"Tools & Home",cats:["tools","furniture"]},
+  {label:"Stroller",cat:"Baby & Kids",cats:["baby"]},{label:"Car seat",cat:"Baby & Kids",cats:["baby"]},
+  {label:"High chair",cat:"Baby & Kids",cats:["baby","furniture"]},{label:"Baby monitor",cat:"Baby & Kids",cats:["baby","electronics"]},
+  {label:"Baby swing",cat:"Baby & Kids",cats:["baby"]},{label:"Play yard",cat:"Baby & Kids",cats:["baby"]},
+  {label:"Toys",cat:"Baby & Kids",cats:["baby"]},{label:"Children's toys",cat:"Baby & Kids",cats:["baby"]},
+  {label:"Stuffed animals",cat:"Baby & Kids",cats:["baby"]},{label:"LEGO sets",cat:"Baby & Kids",cats:["baby"]},
+];
+
+let selectedItems = [], pendingChecked = new Set(), pendingCustomItems = {};
+let selectedCharity = null, aiCharities = [], ddFocusIdx = -1;
+
+/* listeners registered below, after all functions are defined */
+
+/* ── Cache ── */
+function getCached(zip) {
+  try {
+    const c = JSON.parse(localStorage.getItem(CHARITY_CACHE_KEY)||'{}');
+    const e = c[zip];
+    if (!e || Date.now()-e.ts > 7*24*60*60*1000) return null;
+    return e.charities;
+  } catch { return null; }
+}
+function setCache(zip, charities) {
+  try {
+    const c = JSON.parse(localStorage.getItem(CHARITY_CACHE_KEY)||'{}');
+    c[zip] = {charities, ts:Date.now()};
+    const keys = Object.keys(c);
+    if (keys.length > 50) delete c[keys[0]];
+    localStorage.setItem(CHARITY_CACHE_KEY, JSON.stringify(c));
+  } catch {}
+}
+
+/* ── Dropdown ── */
+// Use index-based lookup to avoid all quote-escaping issues in click handlers
+let _ddMatches = [];
+let _ddCustomItem = null;
+
+function onType() {
+  const val = document.getElementById('itemInput').value.trim();
+  const vl = val.toLowerCase();
+  ddFocusIdx = -1;
+  if (!val) { closeDrop(); return; }
+
+  const remaining = MAX_ITEMS - selectedItems.length;
+  _ddMatches = ITEMS_DB.filter(i => i.label.toLowerCase().includes(vl) && !selectedItems.find(s => s.label === i.label)).slice(0, 22);
+  _ddCustomItem = null;
+
+  const byCat = {};
+  _ddMatches.forEach((m, idx) => {
+    if (!byCat[m.cat]) byCat[m.cat] = [];
+    byCat[m.cat].push({ item: m, idx });
+  });
+
+  const chk = '<svg class="dd-cb-check" xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  let ddHtml = '';
+
+  Object.entries(byCat).forEach(function(entry) {
+    const cat = entry[0], entries = entry[1];
+    ddHtml += '<div class="dd-cat">' + cat + '</div>';
+    entries.forEach(function(e) {
+      const item = e.item, idx = e.idx;
+      const checked = pendingChecked.has(item.label);
+      const disabled = !checked && pendingChecked.size >= remaining;
+      ddHtml += '<div class="dd-item' + (checked ? ' checked' : '') + '"'
+        + (disabled ? ' style="opacity:0.4;pointer-events:none"' : '')
+        + ' tabindex="-1" data-ddidx="' + idx + '" data-ddtype="db">'
+        + '<div class="dd-cb">' + chk + '</div>'
+        + item.label
+        + '<span class="dd-icat">' + item.cat + '</span>'
+        + '</div>';
+    });
+  });
+
+  const exact = ITEMS_DB.find(i => i.label.toLowerCase() === vl);
+  const added = selectedItems.find(s => s.label.toLowerCase() === vl);
+  const pend = Array.from(pendingChecked).find(l => l.toLowerCase() === vl);
+  if (!exact && !added && !pend && val.length > 1 && selectedItems.length < MAX_ITEMS) {
+    const cap = val.charAt(0).toUpperCase() + val.slice(1);
+    _ddCustomItem = { label: cap, cat: 'Other', cats: ['other'], custom: true };
+    ddHtml += '<div class="dd-cat" style="border-top:1px solid var(--ink-05)">Add custom item</div>'
+      + '<div class="dd-item dd-custom" tabindex="-1" data-ddtype="custom">'
+      + '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:var(--green-dark)"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'
+      + 'Add “' + cap + '”'
+      + '<span class="dd-icat">Custom</span>'
+      + '</div>';
+  }
+
+  if (!ddHtml) { closeDrop(); return; }
+
+  const n = pendingChecked.size;
+  ddHtml += '<div class="dd-footer">'
+    + '<span class="dd-count">' + (n > 0 ? '<strong>' + n + '</strong> selected' : 'Select items to add') + '</span>'
+    + '<button class="btn-dd-commit" id="ddCommitBtn"' + (n === 0 ? ' disabled' : '') + '>Add ' + (n > 0 ? n + ' item' + (n > 1 ? 's' : '') : 'items') + '</button>'
+    + '</div>';
+
+  const drop = document.getElementById('itemDrop');
+  drop.innerHTML = ddHtml;
+  drop.style.display = 'block';
+
+  // Safe event delegation — no inline onclick, no quote escaping
+  drop.querySelectorAll('[data-ddtype="db"]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      const idx = parseInt(this.getAttribute('data-ddidx'));
+      const item = _ddMatches[idx];
+      if (item) toggleCheck(item.label, item);
+    });
+  });
+  const custEl = drop.querySelector('[data-ddtype="custom"]');
+  if (custEl) custEl.addEventListener('click', function() { if (_ddCustomItem) addItemDirect(_ddCustomItem); });
+  const commitBtn = drop.querySelector('#ddCommitBtn');
+  if (commitBtn) commitBtn.addEventListener('click', commitChecked);
+
+  syncAddBtn();
+}
+
+function toggleCheck(label, item) {
+  if (pendingChecked.has(label)) {
+    pendingChecked.delete(label);
+    delete pendingCustomItems[label];
+  } else {
+    if (pendingChecked.size + selectedItems.length >= MAX_ITEMS) return;
+    pendingChecked.add(label);
+    if (item && item.custom) pendingCustomItems[label] = item;
+  }
+  onType();
+}
+function commitChecked() {
+  if (!pendingChecked.size) { closeDrop(); return; }
+  pendingChecked.forEach(label => {
+    if (selectedItems.find(s=>s.label===label)||selectedItems.length>=MAX_ITEMS) return;
+    const item = ITEMS_DB.find(i=>i.label===label)||pendingCustomItems[label]||{label,cat:'Other',cats:['other'],custom:true};
+    selectedItems.push(item);
+  });
+  pendingChecked.clear(); pendingCustomItems = {};
+  document.getElementById('itemInput').value = '';
+  closeDrop(); renderPills(); updateFMV(); checkStep1();
+}
+function addItemDirect(item) {
+  if (selectedItems.find(s=>s.label===item.label)||selectedItems.length>=MAX_ITEMS) { closeDrop(); return; }
+  selectedItems.push(item);
+  document.getElementById('itemInput').value = '';
+  closeDrop(); renderPills(); updateFMV(); checkStep1();
+}
+function syncAddBtn() {
+  const n = pendingChecked.size;
+  const btn = document.getElementById('btnAddSel');
+  document.getElementById('btnAddSelLbl').textContent = `Add ${n} item${n>1?'s':''}`;
+  btn.classList.toggle('show', n>0);
+}
+function onKey(e) {
+  const items = document.getElementById('itemDrop').querySelectorAll('.dd-item');
+  if (!items.length) return;
+  if (e.key==='ArrowDown'){e.preventDefault();ddFocusIdx=Math.min(ddFocusIdx+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('focused',i===ddFocusIdx));}
+  else if (e.key==='ArrowUp'){e.preventDefault();ddFocusIdx=Math.max(ddFocusIdx-1,0);items.forEach((el,i)=>el.classList.toggle('focused',i===ddFocusIdx));}
+  else if (e.key==='Enter'){e.preventDefault();if(ddFocusIdx>=0)items[ddFocusIdx].click();else if(pendingChecked.size)commitChecked();}
+  else if (e.key==='Escape'){if(pendingChecked.size)commitChecked();else closeDrop();}
+}
+function closeDrop() {
+  document.getElementById('itemDrop').style.display='none';
+  document.getElementById('itemInput').value='';
+  pendingChecked.clear(); pendingCustomItems={};
+  syncAddBtn();
+}
+
+/* ── Pills ── */
+function renderPills() {
+  const wrap = document.getElementById('itemListWrap');
+  const clear = document.getElementById('btnClearAll');
+  const n = selectedItems.length;
+  const pct = Math.round(n / MAX_ITEMS * 100);
+  const banner = document.getElementById('limitBanner');
+  if (n>=MAX_ITEMS) { banner.style.display='block'; document.getElementById('limitText').textContent="You've reached the 20-item limit."; document.getElementById('limitBar').style.width='100%'; }
+  else if (n>=15) { banner.style.display='block'; document.getElementById('limitText').textContent=n+' of '+MAX_ITEMS+' items — '+(MAX_ITEMS-n)+' remaining.'; document.getElementById('limitBar').style.width=pct+'%'; }
+  else banner.style.display='none';
+  if (!n) {
+    clear.style.display='none';
+    wrap.innerHTML='<div class="item-table-wrap"><div class="item-empty">Items you add will appear here</div></div>';
+    return;
+  }
+  clear.style.display='block';
+  let total=0;
+  const rows=selectedItems.map(function(item){
+    const r=getItemFMV(item);
+    const cat=item.cats[0]||'other';
+    const catLabel=(FMV_RANGES[cat]||FMV_RANGES.other).label;
+    total+=r.mid;
+    return '<tr>'
+      + '<td>'+item.label+'</td>'
+      + '<td>'+catLabel+'</td>'
+      + '<td><span class="item-fmv">$'+r.mid.toLocaleString()+'<span class="item-fmv-range">$'+r.low+'-$'+r.high+'</span></span></td>'
+      + '<td><button class="item-remove" data-label="'+encodeURIComponent(item.label)+'" title="Remove">&#x2715;</button></td>'
+      + '</tr>';
+  }).join('');
+  wrap.innerHTML='<div class="item-table-wrap"><table class="item-table"><thead><tr><th>Item</th><th>Category</th><th>Est. Value</th><th></th></tr></thead><tbody>'+rows+'</tbody></table><div class="item-table-footer"><span class="item-table-footer-lbl">'+n+' item'+(n>1?'s':'')+' &nbsp;&middot;&nbsp; estimated total</span><span class="item-table-footer-total">$'+total.toLocaleString()+'</span></div></div>';
+  // Attach remove handlers via delegation — no inline onclick needed
+  wrap.querySelectorAll('.item-remove').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      removeItem(decodeURIComponent(this.getAttribute('data-label')));
+    });
+  });
+}
+function removeItem(label) { selectedItems=selectedItems.filter(i=>i.label!==label); renderPills(); updateFMV(); checkStep1(); }
+function clearAll() { selectedItems=[]; renderPills(); updateFMV(); checkStep1(); }
+function updateFMV() {
+  let t=0; selectedItems.forEach(i=>{t+=getItemFMV(i).mid;});
+  const el=document.getElementById('fmvDisplay');
+  el.textContent='$'+t.toLocaleString();
+  el.className='header-fmv-value'+(t>0?' has-value':'');
+}
+function checkStep1() {
+  const zip=document.getElementById('zipInput').value.trim();
+  document.getElementById('step1Btn').disabled=!(selectedItems.length>0&&/^\d{5}$/.test(zip));
+}
+
+/* ── Navigation ── */
+function goStep(n) {
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('step'+n).classList.add('active');
+  updateProgress(n);
+  window.scrollTo({top:0,behavior:'smooth'});
+  if (n===2) loadCharities();
+  if (n===3) loadValuation();
+}
+function updateProgress(n) {
+  const chk=`<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+  for(let i=1;i<=3;i++){
+    const hs=document.getElementById('hs'+i),sn=document.getElementById('sn'+i);
+    if(i<n){hs.className='header-step done';sn.innerHTML=chk;}
+    else if(i===n){hs.className='header-step current';sn.textContent=i;}
+    else{hs.className='header-step';sn.textContent=i;}
+  }
+}
+
+/* ── Charity search ── */
+async function loadCharities() {
+  const zip=document.getElementById('zipInput').value.trim();
+  const cats=[...new Set(selectedItems.flatMap(i=>i.cats))];
+  const itemNames=selectedItems.map(i=>i.label).join(', ');
+  document.getElementById('step2Sub').textContent='Searching near '+zip+'…';
+  document.getElementById('charityToolbar').style.display='none';
+  document.getElementById('charityList').innerHTML=`<div class="loading-row"><div class="spinner"></div>Finding local charities and verifying websites…</div>`;
+  document.getElementById('step2Btn').disabled=true;
+  const cached=getCached(zip);
+  if (cached) { aiCharities=cached; renderCharities(cached,zip,true); return; }
+
+  const prompt=`You are a verified local charity finder. A user near zip code ${zip} wants to donate: ${itemNames}.
+
+Use web search to find 5-7 real, currently operating donation centers near zip code ${zip}. For each charity you find, verify the correct official website URL by searching for it explicitly.
+
+Include a mix:
+- National orgs with local branches (Goodwill, Habitat for Humanity ReStore, Salvation Army, Vietnam Veterans of America, St. Vincent de Paul Society)
+- Local and niche orgs (community thrift stores, women's shelters, domestic violence orgs, faith-based thrift stores, local food banks, animal shelters for bedding/pet items)
+- Specialty orgs when relevant (Dress for Success for professional clothing, Books for America/Better World Books for books, computer recycling nonprofits for electronics, Furniture Bank for furniture)
+
+CRITICAL: The "website" field must be the real, verified, currently active official URL for that specific organization or its nearest local branch. Do not guess — search to confirm. Use the national site if no local branch URL is found.
+
+Return ONLY a valid JSON array sorted by distance ascending:
+[{"name":"Full official name","type":"2-4 word type","address":"Full street address","distanceMiles":1.4,"accepts":["furniture","electronics","clothing","kitchenware","books","art","sports","accessories","tools","baby","other"],"pickup":true,"hours":"Mon-Sat 9am-5pm","phone":"(555) 555-5555","website":"https://verified-url.org"}]
+
+No markdown, no explanation, JSON array only.`;
+
+  try {
+    const res = await fetch('/api/charities', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ zip, items: itemNames, categories: cats.join(', ') })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const msg = data.error || data.detail || 'Server error ' + res.status;
+      throw new Error(msg);
+    }
+    if (!data.result) throw new Error('No result in response: ' + JSON.stringify(data).slice(0, 200));
+    const charities = data.result;
+    setCache(zip, charities);
+    aiCharities = charities;
+    renderCharities(charities, zip, false);
+  } catch(err) {
+    document.getElementById('charityList').innerHTML='<p class="error-note">Error: ' + err.message + '</p>';
+    document.getElementById('step2Sub').textContent='Something went wrong — see error above.';
+  }
+}
+
+function renderCharities(charities, zip, fromCache) {
+  const cats=[...new Set(selectedItems.flatMap(i=>i.cats))];
+  const relevant=charities.filter(c=>!c.accepts||cats.some(cat=>c.accepts.includes(cat)));
+  const display=relevant.length?relevant:charities;
+  document.getElementById('step2Sub').textContent='';
+  document.getElementById('charityCountLbl').innerHTML=display.length+' charities near '+zip+(fromCache?' <span style="font-size:11px;color:var(--ink-30)">(cached)</span>':'');
+  document.getElementById('charityToolbar').style.display='flex';
+  document.getElementById('charityList').innerHTML='<div class="charity-grid">'+
+    display.map((c,idx)=>{
+      const color=COLORS[idx%COLORS.length];
+      const catTags=(c.accepts||[]).slice(0,3).map(a=>`<span class="badge badge-cat">${a.charAt(0).toUpperCase()+a.slice(1)}</span>`).join('');
+      const distBadge=c.distanceMiles!=null?`<span class="badge badge-dist">${parseFloat(c.distanceMiles).toFixed(1)} mi</span>`:'';
+      const pickupBadge=c.pickup?`<span class="badge badge-pickup">Free pickup</span>`:`<span class="badge badge-nopickup">Drop-off only</span>`;
+      const websiteLink=c.website?`<a class="charity-website" href="${c.website}" target="_blank" onclick="event.stopPropagation()">${c.website.replace(/^https?:\/\/(www\.)?/,'').split('/')[0]} <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`:'';
+      return `<div class="charity-card" onclick="selectCharity(this,${idx})">
+        <div class="charity-top">
+          <div class="charity-dot" style="background:${color}"></div>
+          <div style="flex:1;min-width:0">
+            <p class="charity-name">${c.name}</p>
+            <div class="charity-meta">
+              <span>${c.type}</span>
+              ${c.address?`<span>${c.address}</span>`:''}
+              ${c.hours?`<span>${c.hours}</span>`:''}
+              ${c.phone?`<span>${c.phone}</span>`:''}
+            </div>
+            ${websiteLink}
+          </div>
+        </div>
+        <div class="charity-badges">${distBadge}${pickupBadge}${catTags}</div>
+      </div>`;
+    }).join('')+'</div>';
+}
+
+function selectCharity(el,idx){
+  document.querySelectorAll('.charity-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedCharity=aiCharities[idx];
+  document.getElementById('step2Btn').disabled=false;
+}
+
+/* ── Print ── */
+function doPrint(){
+  const zip=document.getElementById('zipInput').value.trim();
+  const items=selectedItems.map(i=>i.label).join(', ');
+  let html=`<div class="print-header"><div class="print-title">Donation Charity List — SaveOr</div><div class="print-meta">Zip: ${zip} | Items: ${items} | ${new Date().toLocaleDateString()}</div></div>`;
+  aiCharities.forEach(c=>{
+    const dist=c.distanceMiles!=null?`${parseFloat(c.distanceMiles).toFixed(1)} mi`:'';
+    html+=`<div class="print-card"><div class="print-name">${c.name}</div><div class="print-row">${c.type}${dist?' — '+dist:''}</div>${c.address?`<div class="print-row">${c.address}</div>`:''}${c.hours?`<div class="print-row">Hours: ${c.hours}</div>`:''}${c.phone?`<div class="print-row">Phone: ${c.phone}</div>`:''}${c.website?`<div class="print-row">Web: ${c.website}</div>`:''}<div class="print-row">${c.pickup?'Free pickup available':'Drop-off only'}</div></div>`;
+  });
+  document.getElementById('printArea').innerHTML=html;
+  window.print();
+}
+
+/* ── Valuation (Step 3) ── */
+async function loadValuation() {
+  const cn = selectedCharity ? selectedCharity.name : 'your selected charity';
+  const cw = (selectedCharity&&selectedCharity.website) ? selectedCharity.website : '';
+  const dist = selectedCharity&&selectedCharity.distanceMiles!=null ? `${parseFloat(selectedCharity.distanceMiles).toFixed(1)} mi away` : '';
+  const pickup = selectedCharity ? (selectedCharity.pickup ? 'Free pickup available' : 'Drop-off only') : '';
+
+  document.getElementById('step3Sub').textContent = 'Generating your itemized valuation from Salvation Army guidelines…';
+  document.getElementById('valuationContent').innerHTML = `<div class="loading-row"><div class="spinner"></div>Calculating fair market values for ${selectedItems.length} item${selectedItems.length>1?'s':''}…</div>`;
+
+  // Build per-item valuations from Salvation Army Donation Value Guide
+  const rows = selectedItems.map(item => {
+    const cat = item.cats[0] || 'other';
+    const range = getItemFMV(item);
+    const catLabel = (FMV_RANGES[cat] || FMV_RANGES.other).label;
+    return { item, cat, range, catLabel };
+  });
+
+  const totalLow = rows.reduce((s,r)=>s+r.range.low, 0);
+  const totalMid = rows.reduce((s,r)=>s+r.range.mid, 0);
+  const totalHigh = rows.reduce((s,r)=>s+r.range.high, 0);
+
+  // Build valuation HTML
+  const today = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const websiteLink = cw ? `<a href="${cw}" target="_blank" style="color:var(--green-dark);text-decoration:none;font-weight:600">${cn}</a>` : `<strong>${cn}</strong>`;
+
+  let html = `
+  <div class="charity-summary">
+    <div class="charity-dot" style="background:var(--green);flex-shrink:0;margin-top:0;width:10px;height:10px;border-radius:50%"></div>
+    <div style="flex:1;min-width:0">
+      <div class="charity-summary-name">${cn}</div>
+      <div class="charity-summary-meta">${[dist,pickup].filter(Boolean).join(' · ')}</div>
+      ${cw?`<a class="charity-summary-link" href="${cw}" target="_blank">Visit website <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`:''}
+    </div>
+  </div>
+
+  <div class="receipt-block">
+    <div class="receipt-block-inner">
+      <div class="receipt-header">
+        <div class="receipt-org">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Donation to ${websiteLink}
+        </div>
+        <div class="receipt-date">Date: ${today} &nbsp;·&nbsp; Salvation Army Donation Value Guide · IRS Publication 561</div>
+      </div>
+      <table class="receipt-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Category</th>
+            <th>Est. Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r=>`<tr>
+            <td><strong>${r.item.label}</strong></td>
+            <td style="color:var(--ink-60)">${r.catLabel}</td>
+            <td>$${r.range.mid.toLocaleString()}<span class="low-high">$${r.range.low}–$${r.range.high} range</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="receipt-note">Values from The Salvation Army Donation Value Guide (salvationarmyusa.org). Actual deductible amount depends on item condition; consult IRS Publication 561 and your tax professional.</div>
+    </div>
+    <div class="receipt-total-row">
+      <span class="receipt-total-label">Total estimated deduction</span>
+      <span class="receipt-total-value">$${totalMid.toLocaleString()} <span style="font-size:14px;font-weight:500;opacity:0.6">($${totalLow.toLocaleString()}–$${totalHigh.toLocaleString()})</span></span>
+    </div>
+  </div>
+
+  <div class="pitch-block">
+    <div class="pitch-badge"><span style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block;margin-right:2px"></span>Protect your deduction</div>
+    <h2 class="pitch-title">Document this $${totalMid.toLocaleString()} donation with SaveOr</h2>
+    <p class="pitch-sub">This receipt is an estimate — the IRS requires documentation. SaveOr lets you photograph every item before it leaves, attach the charity's receipt, and store an IRS-ready record permanently.</p>
+    <div class="pitch-feats">
+      <div class="pitch-feat"><span class="feat-dot"></span>Photograph items before they leave</div>
+      <div class="pitch-feat"><span class="feat-dot"></span>Attach charity receipts digitally</div>
+      <div class="pitch-feat"><span class="feat-dot"></span>IRS Form 8283 reference built in</div>
+      <div class="pitch-feat"><span class="feat-dot"></span>iOS &amp; Android — 7-day free trial</div>
+    </div>
+    <div class="pitch-actions">
+      <a href="https://app.saveor.com" class="btn-green" target="_blank">
+        Start free trial — document this donation
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+      ${cw?`<a href="${cw}" class="btn-ghost-white" target="_blank">Schedule with ${cn}</a>`:''}
+    </div>
+  </div>
+
+  <div class="btn-row" style="margin-top:16px">
+    <button class="btn btn-outline" onclick="goStep(2)">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Choose a different charity
+    </button>
+  </div>
+
+  <p class="legal-note">SaveOr is not a law firm or tax advisor. Fair market value estimates are sourced from The Salvation Army Donation Value Guide and are provided for reference only. Actual deductible amounts depend on item condition and IRS requirements. Consult a qualified tax professional regarding your specific situation and IRS requirements for non-cash charitable contributions.</p>`;
+
+  document.getElementById('step3Sub').textContent = '';
+  document.getElementById('valuationContent').innerHTML = html;
+}
+/* ── Attach all listeners here, after all functions are defined ── */
+document.getElementById('itemInput').addEventListener('input', onType);
+document.getElementById('itemInput').addEventListener('keydown', onKey);
+document.getElementById('zipInput').addEventListener('input', checkStep1);
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.autocomplete-wrap') && !e.target.closest('#btnAddSel')) {
+    if (pendingChecked.size > 0) commitChecked(); else closeDrop();
+  }
+});
+</script>
+
+<div style="position:fixed;bottom:14px;right:14px;z-index:999;background:white;border:1px solid #E5E7EB;border-radius:8px;padding:7px 12px;display:flex;align-items:center;gap:7px;box-shadow:0 2px 8px rgba(0,0,0,0.08);font-family:Inter,-apple-system,sans-serif;">
+  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  <span style="font-size:11px;color:#6B7280;font-weight:500;">Values from <a href="https://www.salvationarmyusa.org/usn/store/donate-goods/" target="_blank" style="color:#16A34A;text-decoration:none;font-weight:600;">Salvation Army</a> Donation Guide</span>
+</div>
+</body>
+</html>
